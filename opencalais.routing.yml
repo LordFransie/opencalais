@@ -1,0 +1,6 @@
+opencalais.settings:
+  path: '/admin/config/content/opencalais'
+  defaults:
+    _form: '\Drupal\snippets\Form\OpenCalaisSettingsForm'
+  requirements:
+    _permission: 'administer site configuration'

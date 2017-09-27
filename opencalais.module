@@ -1,0 +1,95 @@
+<?php
+
+/**
+ * @file
+ * Contains opencalais.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\opencalais\CalaisService;
+
+/**
+ * Implements hook_menu().
+ */
+function opencalais_menu() {
+  $items['admin/config/content/opencalais'] = array(
+    'title' => 'Open Calais Settings',
+    'description' => "Configure Open Calais module.",
+    'route_name' => 'opencalais.settings',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_help().
+ */
+function opencalais_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the opencalais module.
+    case 'help.page.opencalais':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Utilize the Open Calais API to tag content.') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+/*
+ * Implements hook_node_update(Drupal Core Entity EntityInterface $node)
+ */
+
+function opencalais_node_update($node){
+//kint($node);
+drupal_set_message("Woot");  
+  $body = "There once was a man from nantucket, who always was lost in a bucket, when the bucket was dry, he immediately died, and then he finally fell out of his bucket";  
+
+  $options = array(
+      'apiKey' => 'QOFByCaIzW9E0ezjWpOquJfFXAEVNTdm',
+      'contentType' => 'text/plain',
+      'content' => strip_tags($body),
+      'host' => 'api.thomsonreuters.com',
+    );
+  
+  //$calais = opencalais_get_service($options);
+  $calais = new CalaisService($options);
+  //Get your tags
+  $tags = $calais->analyze();
+ 
+  kint($tags); 
+  $headers = array(
+      'Content-Type: text/raw',
+      'X-AG-Access-Token: QOFByCaIzW9E0ezjWpOquJfFXAEVNTdm',
+      'outputformat: application/json',
+    );
+
+    // Construct the URL to calais based on host name and protocol. This is likely
+    // static, but will keep this as it was for now.
+    $uri = 'https' . '://' . 'api.thomsonreuters.com' . '/permid/calais';
+
+    $curlOptions = array(
+      CURLOPT_URL => $uri,
+      CURLOPT_HTTPHEADER => $headers,
+      CURLOPT_SSL_VERIFYPEER => FALSE,
+      CURLOPT_RETURNTRANSFER => 1,
+      CURLOPT_POSTFIELDS => "super dope content yo this is where it is all at. Let's talk about health care and medicine!",
+    );
+
+    $ch = curl_init();
+    curl_setopt_array($ch, $curlOptions);
+
+    // send request and get response from api..........
+    //$response = curl_exec($ch);
+}
+
+/**
+ * Return the OpenCalais Service class.
+ *
+ * @param $options An array of option parameters to be sent to the CalaisService class.
+ * @return $object The initialized CalaisService object.
+ */
+function opencalais_get_service($options = array()) {
+  return new CalaisService($options);
+}
