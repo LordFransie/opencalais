@@ -4,3 +4,16 @@ opencalais.settings:
     _form: '\Drupal\snippets\Form\OpenCalaisSettingsForm'
   requirements:
     _permission: 'administer site configuration'
+
+opencalais.open_calais_fields:
+  path: 'admin/structure/types/manage/{node_type}/opencalais'
+  defaults:
+    _form: '\Drupal\opencalais\Form\OpenCalaisFields'
+    _title: 'OpenCalaisField'
+  requirements:
+    _access: 'TRUE'
+  options:
+    parameters:
+      node_type:
+        type: node_type
+  

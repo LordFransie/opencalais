@@ -42,46 +42,30 @@ function opencalais_help($route_name, RouteMatchInterface $route_match) {
  */
 
 function opencalais_node_update($node){
-//kint($node);
-drupal_set_message("Woot");  
-  $body = "There once was a man from nantucket, who always was lost in a bucket, when the bucket was dry, he immediately died, and then he finally fell out of his bucket";  
-
-  $options = array(
+  // Determine if we have any fields that we want to send up
+  $my_config = \Drupal::config('opencalais.opencalaisnodeconfig')->get($node->getType());
+  $concat_string = '';
+  foreach($my_config as $key => $value) {
+    // We append a '. ' because we can't depend on users to enter good data
+    $concat_string .= strip_tags($node->get($key)->value . '. ');
+  }
+  ksm($concat_string);
+  
+  // Send Values.
+  if($concat_string != '') {
+    $options = array(
       'apiKey' => 'QOFByCaIzW9E0ezjWpOquJfFXAEVNTdm',
       'contentType' => 'text/plain',
-      'content' => strip_tags($body),
+      'content' => strip_tags($concat_string),
       'host' => 'api.thomsonreuters.com',
     );
   
-  //$calais = opencalais_get_service($options);
-  $calais = new CalaisService($options);
-  //Get your tags
-  $tags = $calais->analyze();
- 
-  kint($tags); 
-  $headers = array(
-      'Content-Type: text/raw',
-      'X-AG-Access-Token: QOFByCaIzW9E0ezjWpOquJfFXAEVNTdm',
-      'outputformat: application/json',
-    );
-
-    // Construct the URL to calais based on host name and protocol. This is likely
-    // static, but will keep this as it was for now.
-    $uri = 'https' . '://' . 'api.thomsonreuters.com' . '/permid/calais';
-
-    $curlOptions = array(
-      CURLOPT_URL => $uri,
-      CURLOPT_HTTPHEADER => $headers,
-      CURLOPT_SSL_VERIFYPEER => FALSE,
-      CURLOPT_RETURNTRANSFER => 1,
-      CURLOPT_POSTFIELDS => "super dope content yo this is where it is all at. Let's talk about health care and medicine!",
-    );
-
-    $ch = curl_init();
-    curl_setopt_array($ch, $curlOptions);
-
-    // send request and get response from api..........
-    //$response = curl_exec($ch);
+    //$calais = opencalais_get_service($options);
+    $calais = new CalaisService($options);
+    //Get your tags
+    $tags = $calais->analyze();
+  } 
+  ksm($tags); 
 }
 
 /**
