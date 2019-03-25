@@ -7,6 +7,9 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\opencalais\CalaisService;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\BaseFieldDefinition;
 
 /**
  * Implements hook_menu().
@@ -76,4 +79,53 @@ function opencalais_node_update($node){
  */
 function opencalais_get_service($options = array()) {
   return new CalaisService($options);
+}
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function opencalais_entity_base_field_info(EntityTypeInterface $entity_type) {
+    if (in_array($entity_type->id(), ['taxonomy_term', 'node', 'media'], TRUE)) {
+
+        $fields['opencalais'] = BaseFieldDefinition::create('entity_reference')
+            ->setLabel(t('OpenCalais'))
+            ->setDescription(t('What was this tagged with.'))
+            ->setSetting('target_type', 'taxonomy_term')
+            ->setSetting('handler_settings', ['target_bundles' => ['OpenCalais' => 'opencalais']])
+            ->setDisplayOptions('view', array(
+                'label' => 'above',
+                'type' => 'author',
+                'weight' => -3,
+            ))
+            ->setDisplayOptions('form', array(
+                'type' => 'entity_reference_autocomplete',
+                'settings' => array(
+                    'match_operator' => 'CONTAINS',
+                    'size' => 60,
+                    'placeholder' => '',
+                ),
+                'weight' => -3,
+            ))
+            ->setDisplayConfigurable('form', TRUE)
+            ->setDisplayConfigurable('view', TRUE);
+
+        return $fields;
+    }
+}
+
+function opencalais_form_node_event_edit_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+
+    $form['opencalais_group'] = [
+        '#type' => 'details',
+        '#title' => t('OpenCalais'),
+        '#weight' => 100,
+        '#optional' => TRUE,
+        '#attributes' => [
+            'class' => ['node-form-author'],
+        ],
+        '#attached' => [
+            'library' => ['node/drupal.node'],
+        ],
+    ];
+    ksm($form);
 }
