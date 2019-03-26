@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\opencalais\Form\OpenCalaisSettingsForm.
- */
-
 namespace Drupal\opencalais\Form;
 
 use Drupal\Core\Form\ConfigFormBase;

@@ -20,4 +20,3 @@ opencalais.open_calais_config:
     _permission: 'access administration pages'
   options:
     _admin_route: TRUE
-
