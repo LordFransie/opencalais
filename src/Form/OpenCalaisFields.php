@@ -31,11 +31,10 @@ class OpenCalaisFields extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // @TODO: Actually divine the node type
-    $node_type = 'event';
-    $config = $this->config('opencalais.opencalaisnodeconfig')->get('event');
+    $node_type = \Drupal::routeMatch()->getCurrentRouteMatch()->getRawParameter('node_type');
+    $config = $this->config('opencalais.opencalaisnodeconfig')->get($node_type);
     $entityManager = \Drupal::service('entity_field.manager');
-    $fields = $entityManager->getFieldDefinitions('node', 'event');
-    ksm($config);
+    $fields = $entityManager->getFieldDefinitions('node', $node_type);
     foreach ($fields as $fieldName => $field) {
       // @TODO: Just search for text fields so we aren't doing this messy nonsense
       if (strpos($fieldName, 'field_') !== false) {
@@ -58,7 +57,6 @@ class OpenCalaisFields extends ConfigFormBase {
         } 
       }
    }
-ksm($form);
 
     $form['submit'] = [
       '#type' => 'submit',

@@ -13,7 +13,4 @@ function opencalais_install() {
  * Implements hook_uninstall().
  */
 function opencalais_uninstall() {
-    $entity_manager = \Drupal::entityManager();
-    $definition = $entity_manager->getLastInstalledFieldStorageDefinitions('node')['opencalais'];
-    $entity_manager->onFieldStorageDefinitionDelete($definition);
 }

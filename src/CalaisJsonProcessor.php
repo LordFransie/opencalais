@@ -108,7 +108,7 @@ class CalaisJsonProcessor {
         $this->set_relevance($keywords, $guid, $data);
       }
 
-      $er_type = drupal_strtolower($data->_type);
+      $er_type = strtolower($data->_type);
       $method = 'apply_resolved_' . $er_type;
 
       if (!method_exists($this, $method)) {

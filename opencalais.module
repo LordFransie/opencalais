@@ -10,6 +10,7 @@ use Drupal\opencalais\CalaisService;
 use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\taxonomy\Entity\Term;
 
 /**
  * Implements hook_menu().
@@ -41,23 +42,24 @@ function opencalais_help($route_name, RouteMatchInterface $route_match) {
 }
 
 /*
- * Implements hook_node_update(Drupal Core Entity EntityInterface $node)
+ * @Inherit
  */
 
-function opencalais_node_update($node){
+function opencalais_node_presave($entity){
   // Determine if we have any fields that we want to send up
-  $my_config = \Drupal::config('opencalais.opencalaisnodeconfig')->get($node->getType());
+  $my_config = \Drupal::config('opencalais.opencalaisnodeconfig')->get($entity->getType());
+
   $concat_string = '';
   foreach($my_config as $key => $value) {
     // We append a '. ' because we can't depend on users to enter good data
-    $concat_string .= strip_tags($node->get($key)->value . '. ');
+    $concat_string .= strip_tags($entity->get($key)->value . '. ');
   }
-  ksm($concat_string);
+  $concat_string = preg_replace('/\n+/', "\n", trim($concat_string));
   
   // Send Values.
   if($concat_string != '') {
     $options = array(
-      'apiKey' => 'QOFByCaIzW9E0ezjWpOquJfFXAEVNTdm',
+      'apiKey' => \Drupal::config('opencalais.opencalaisconfig')->get('api_key'),
       'contentType' => 'text/plain',
       'content' => strip_tags($concat_string),
       'host' => 'api.thomsonreuters.com',
@@ -68,7 +70,28 @@ function opencalais_node_update($node){
     //Get your tags
     $tags = $calais->analyze();
   } 
-  ksm($tags); 
+
+  $terms = []; 
+  foreach($tags->SocialTags->terms as $termContainer){
+    $properties = ['name' => $termContainer->name, 'vid' => 'opencalais'];
+    $term = \Drupal::entityManager()->getStorage('taxonomy_term')->loadByProperties($properties);
+    $term = reset($term);
+    // Check if the term exists, create it if it does not
+    if(empty($term)){
+      $term = Term::create([
+        'name' => $termContainer->name, 
+        'vid' => 'opencalais',
+      ]);
+      $term->enforceIsNew();
+      $term->save();
+      
+    }
+    // Store terms
+    $terms[] = ['target_id' => $term->id()];
+  }
+  $entity->set('opencalais', $terms);
+  //ksm($terms);
+  //ksm($entity); 
 }
 
 /**
@@ -85,12 +108,13 @@ function opencalais_get_service($options = array()) {
  * Implements hook_entity_base_field_info().
  */
 function opencalais_entity_base_field_info(EntityTypeInterface $entity_type) {
-    if (in_array($entity_type->id(), ['taxonomy_term', 'node', 'media'], TRUE)) {
+    if (in_array($entity_type->id(), ['node'], TRUE)) {
 
         $fields['opencalais'] = BaseFieldDefinition::create('entity_reference')
             ->setLabel(t('OpenCalais'))
             ->setDescription(t('What was this tagged with.'))
             ->setSetting('target_type', 'taxonomy_term')
+            ->setCardinality(-1)
             ->setSetting('handler_settings', ['target_bundles' => ['OpenCalais' => 'opencalais']])
             ->setDisplayOptions('view', array(
                 'label' => 'above',
@@ -113,19 +137,3 @@ function opencalais_entity_base_field_info(EntityTypeInterface $entity_type) {
     }
 }
 
-function opencalais_form_node_event_edit_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-
-    $form['opencalais_group'] = [
-        '#type' => 'details',
-        '#title' => t('OpenCalais'),
-        '#weight' => 100,
-        '#optional' => TRUE,
-        '#attributes' => [
-            'class' => ['node-form-author'],
-        ],
-        '#attached' => [
-            'library' => ['node/drupal.node'],
-        ],
-    ];
-    ksm($form);
-}
